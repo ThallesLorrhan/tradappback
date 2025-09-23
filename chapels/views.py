@@ -1,3 +1,4 @@
+# chapels/views.py
 from rest_framework import viewsets
 from .models import Chapel
 from .serializers import ChapelSerializer
