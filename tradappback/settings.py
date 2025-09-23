@@ -10,7 +10,8 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-dev-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ['<thalelslorrhan>.pythonanywhere.com']
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -57,12 +58,14 @@ WSGI_APPLICATION = 'tradappback.wsgi.application'
 
 # Database
 # Para produção, você pode usar PostgreSQL substituindo o ENGINE e usando variáveis de ambiente
+BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
