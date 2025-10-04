@@ -1,27 +1,9 @@
+# serializers.py
 from rest_framework import serializers
 from .models import Chapel, Responsible, ChapelImage, Mass
 import json
 
-class MassSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Mass
-        fields = ['day_of_week', 'time', 'mass_type', 'notes']
-
-class ResponsibleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Responsible
-        fields = ['name', 'role', 'phone', 'email']
-
-class ChapelImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChapelImage
-        fields = ['image', 'caption']
-
 class ChapelSerializer(serializers.ModelSerializer):
-    masses = MassSerializer(many=True)
-    responsibles = ResponsibleSerializer(many=True)
-    images = ChapelImageSerializer(many=True, required=False)
-
     class Meta:
         model = Chapel
         fields = '__all__'
@@ -29,14 +11,35 @@ class ChapelSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
 
-        # Parse JSON enviado via FormData
-        masses_data = json.loads(request.data.get('masses', '[]')) if request else []
-        responsibles_data = json.loads(request.data.get('responsibles', '[]')) if request else []
+        # Pegando massas e responsáveis do request
+        masses_data = request.data.get('masses', '[]')
+        responsibles_data = request.data.get('responsibles', '[]')
 
-        # Pega os arquivos de imagens
-        images_files = request.FILES.getlist('images') if request else []
+        # Se forem strings JSON, converte para lista
+        if isinstance(masses_data, str):
+            masses_data = json.loads(masses_data)
+        if isinstance(responsibles_data, str):
+            responsibles_data = json.loads(responsibles_data)
 
-        # Remove campos do validated_data para não dar conflito
+        # Latitude e longitude (tratando arrays)
+        lat = request.data.get('latitude')
+        lon = request.data.get('longitude')
+
+        try:
+            if isinstance(lat, list):
+                lat = lat[0]
+            validated_data['latitude'] = float(lat) if lat else None
+        except (TypeError, ValueError):
+            validated_data['latitude'] = None
+
+        try:
+            if isinstance(lon, list):
+                lon = lon[0]
+            validated_data['longitude'] = float(lon) if lon else None
+        except (TypeError, ValueError):
+            validated_data['longitude'] = None
+
+        # Remove campos extras que não existem na model
         validated_data.pop('masses', None)
         validated_data.pop('responsibles', None)
         validated_data.pop('images', None)
@@ -53,7 +56,7 @@ class ChapelSerializer(serializers.ModelSerializer):
             Responsible.objects.create(chapel=chapel, **responsible)
 
         # Cria imagens
-        for image_file in images_files:
+        for image_file in request.FILES.getlist('images'):
             ChapelImage.objects.create(chapel=chapel, image=image_file)
 
         return chapel

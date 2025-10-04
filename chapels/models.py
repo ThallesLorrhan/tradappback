@@ -12,8 +12,9 @@ class Chapel(models.Model):
     contact_email = models.EmailField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
 
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, null=True, blank=True)
+
 
     description = models.TextField(blank=True, null=True)
 
