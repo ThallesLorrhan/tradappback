@@ -1,6 +1,6 @@
-# serializers.py
 from rest_framework import serializers
 from .models import Chapel, Responsible, ChapelImage, Mass
+import json
 
 class MassSerializer(serializers.ModelSerializer):
     day_of_week_display = serializers.CharField(source='get_day_of_week_display', read_only=True)
@@ -35,14 +35,11 @@ class ChapelSerializer(serializers.ModelSerializer):
         masses_data = request.data.get('masses', '[]')
         responsibles_data = request.data.get('responsibles', '[]')
 
-        # Convertendo de JSON se necessário
-        import json
         if isinstance(masses_data, str):
             masses_data = json.loads(masses_data)
         if isinstance(responsibles_data, str):
             responsibles_data = json.loads(responsibles_data)
 
-        # Latitude e longitude
         lat = request.data.get('latitude')
         lon = request.data.get('longitude')
         try:
@@ -58,10 +55,10 @@ class ChapelSerializer(serializers.ModelSerializer):
         except (TypeError, ValueError):
             validated_data['longitude'] = None
 
-        # Remover campos extras
         validated_data.pop('masses', None)
         validated_data.pop('responsibles', None)
         validated_data.pop('images', None)
+        validated_data.pop('address', None) 
 
         chapel = Chapel.objects.create(**validated_data)
 
