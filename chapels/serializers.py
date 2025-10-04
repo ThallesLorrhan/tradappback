@@ -3,28 +3,44 @@ from rest_framework import serializers
 from .models import Chapel, Responsible, ChapelImage, Mass
 
 class MassSerializer(serializers.ModelSerializer):
-    day_of_week_display = serializers.CharField(source='get_day_of_week_display', read_only=True)
-    mass_type_display = serializers.CharField(source='get_mass_type_display', read_only=True)
-
     class Meta:
         model = Mass
-        fields = ['id', 'day_of_week', 'time', 'mass_type', 'notes', 'day_of_week_display', 'mass_type_display']
+        fields = ['day_of_week', 'time', 'mass_type', 'notes']
 
 class ResponsibleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Responsible
-        fields = ['id', 'name', 'role', 'phone', 'email']
+        fields = ['name', 'role', 'phone', 'email']
 
 class ChapelImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChapelImage
-        fields = ['id', 'image', 'caption']
+        fields = ['image', 'caption']
 
 class ChapelSerializer(serializers.ModelSerializer):
-    masses = MassSerializer(many=True, read_only=True)
-    responsibles = ResponsibleSerializer(many=True, read_only=True)
-    images = ChapelImageSerializer(many=True, read_only=True)
+    masses = MassSerializer(many=True)
+    responsibles = ResponsibleSerializer(many=True)
+    images = ChapelImageSerializer(many=True)
 
     class Meta:
         model = Chapel
         fields = '__all__'
+
+    def create(self, validated_data):
+        masses_data = validated_data.pop('masses', [])
+        responsibles_data = validated_data.pop('responsibles', [])
+        images_data = validated_data.pop('images', [])
+
+        chapel = Chapel.objects.create(**validated_data)
+
+        for mass in masses_data:
+            Mass.objects.create(chapel=chapel, **mass)
+
+        for responsible in responsibles_data:
+            Responsible.objects.create(chapel=chapel, **responsible)
+
+        for image in images_data:
+            ChapelImage.objects.create(chapel=chapel, **image)
+
+        return chapel
+
