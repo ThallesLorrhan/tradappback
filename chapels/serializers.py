@@ -32,42 +32,36 @@ class ChapelSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
 
-        masses_data = request.data.get('masses', '[]')
-        responsibles_data = request.data.get('responsibles', '[]')
+        # Parse JSON com segurança
+        def parse_json(field):
+            data = request.data.get(field, '[]')
+            if isinstance(data, str):
+                try:
+                    return json.loads(data)
+                except json.JSONDecodeError:
+                    return []
+            return data
 
-        if isinstance(masses_data, str):
-            masses_data = json.loads(masses_data)
-        if isinstance(responsibles_data, str):
-            responsibles_data = json.loads(responsibles_data)
+        masses_data = parse_json('masses')
+        responsibles_data = parse_json('responsibles')
 
-        lat = request.data.get('latitude')
-        lon = request.data.get('longitude')
-        try:
-            if isinstance(lat, list):
-                lat = lat[0]
-            validated_data['latitude'] = float(lat) if lat else None
-        except (TypeError, ValueError):
-            validated_data['latitude'] = None
-        try:
-            if isinstance(lon, list):
-                lon = lon[0]
-            validated_data['longitude'] = float(lon) if lon else None
-        except (TypeError, ValueError):
-            validated_data['longitude'] = None
+        def parse_float(value):
+            try:
+                if isinstance(value, list):
+                    value = value[0]
+                return float(value)
+            except (TypeError, ValueError):
+                return None
 
-        validated_data.pop('masses', None)
-        validated_data.pop('responsibles', None)
-        validated_data.pop('images', None)
-        validated_data.pop('address', None) 
+        validated_data['latitude'] = parse_float(request.data.get('latitude'))
+        validated_data['longitude'] = parse_float(request.data.get('longitude'))
 
+        # Cria a capela
         chapel = Chapel.objects.create(**validated_data)
 
-        for mass in masses_data:
-            Mass.objects.create(chapel=chapel, **mass)
-
-        for responsible in responsibles_data:
-            Responsible.objects.create(chapel=chapel, **responsible)
-
+        # Cria missas, responsáveis e imagens
+        Mass.objects.bulk_create([Mass(chapel=chapel, **mass) for mass in masses_data])
+        Responsible.objects.bulk_create([Responsible(chapel=chapel, **r) for r in responsibles_data])
         for image_file in request.FILES.getlist('images'):
             ChapelImage.objects.create(chapel=chapel, image=image_file)
 
