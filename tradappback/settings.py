@@ -1,7 +1,5 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -67,18 +65,13 @@ WSGI_APPLICATION = 'tradappback.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
+        'NAME': 'postgres',  # nome do banco criado no RDS
+        'USER': 'postgres',     # usuário do RDS
+        'PASSWORD': 'T.30l18o23',
+        'HOST': 'db-tridentine-mass.c45qai0g0wpu.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
     }
 }
-
-SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG') == 'True'
-ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS')]
-
 
 # 🔑 Validação de senha
 AUTH_PASSWORD_VALIDATORS = [
